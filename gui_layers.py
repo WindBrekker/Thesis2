@@ -40,30 +40,32 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("QuantumSlice")
         self.setGeometry(0,0,1200,700)
 
-        #main layout
+    #main layout
         pagelayout = QVBoxLayout()
-        #sub layouts
+    #sub layouts
         Upper_layout = QHBoxLayout()
         # Upper_layout.addWidget(Color("orange"))
         Lower_layout = QHBoxLayout()
         # Lower_layout.addWidget(Color("blue"))
 
-        #sub upper_layouts
+    #sub upper_layouts
         Results_layout = QHBoxLayout()
         # Results_layout.addWidget(Color("purple"))
-        #sub lower_layout
+    #sub lower_layout
         Left_layout = QVBoxLayout()
         # Left_layout.addWidget(Color("orange"))
         Data_layout = QVBoxLayout()
         # Data_layout.addWidget(Color("red"))
-        #data_llayout
+    #data_layout
         Input_layout = QVBoxLayout()
         #Input_layout.addWidget(Color("blue"))
         Names_layout = QVBoxLayout()
         Names_layout.addWidget(Color("transparent"))
         Saving_layout = QVBoxLayout()
         Saving_layout.addWidget(Color("transparent"))
-        #sub Left_layout
+    #sub saving_layout
+        saving_button_layout = QHBoxLayout()
+    #sub Left_layout
         Sample_layout = QVBoxLayout()
         # Sample_layout.addWidget(Color("pink"))
         Panel_layout = QHBoxLayout()
@@ -82,9 +84,10 @@ class MainWindow(QMainWindow):
         Left_layout.addLayout(Panel_layout,2)
         Left_layout.addLayout(Sample_layout,8)
 
-        Data_layout.addLayout(Input_layout,2)
+        Data_layout.addLayout(Input_layout,1)
         Data_layout.addLayout(Names_layout,3)
         Data_layout.addLayout(Saving_layout,5)
+        Data_layout.addLayout(saving_button_layout,1)
 
         #Widgets
         #QLabel
@@ -117,6 +120,8 @@ class MainWindow(QMainWindow):
         self.Max_value_label = QLabel("",self)
         self.Mask_label = QLabel("Mask:",self)
         self.Mask_value_label = QLabel("K",self)
+        self.input_info_label = QLabel("Enter the appropriate values",self)
+        self.names_inof_label = QLabel("Enter used nomenclature",self)
 
 
 
@@ -148,6 +153,10 @@ class MainWindow(QMainWindow):
         self.Lambda_combobox.addItems(["Don't save",".dat"])
         self.Livetime_combobox = QComboBox(self)
         self.Livetime_combobox.addItems([ "Don't save",".dat"])
+        self.Prefere_folder = QComboBox(self)
+        self.Prefere_folder.activated.connect(self.prefered_folder_selected)
+        self.Prefere_folder.setEnabled(False)
+        self.Prefere_folder.setPlaceholderText("Confirm identifiers first")
 
         # #QPixmap
         self.sample_pixmap = QPixmap('photo.png')
@@ -178,14 +187,17 @@ class MainWindow(QMainWindow):
 
 
         # #Adding widgets
+        Input_layout.addWidget(self.input_info_label)
         Input_layout.addWidget(self.Main_folder)
         Input_layout.addWidget(self.Pixel)
 
+        Names_layout.addWidget(self.names_inof_label)
         Names_layout.addWidget(self.Inputfile)
         Names_layout.addWidget(self.Zeropeak)
         Names_layout.addWidget(self.Scater)
         Names_layout.addWidget(self.SampMatrix)
         Names_layout.addWidget(self.confirm_names_button)
+        Names_layout.addWidget(self.Prefere_folder)
         
         
         Saving_layout.addWidget(self.Ci_label)
@@ -196,8 +208,8 @@ class MainWindow(QMainWindow):
         Saving_layout.addWidget(self.Lambda_combobox)
         Saving_layout.addWidget(self.Livetime_label)
         Saving_layout.addWidget(self.Livetime_combobox)
-        Saving_layout.addWidget(self.confirm_saving_button)
-        Saving_layout.addWidget(self.saving_button)
+        saving_button_layout.addWidget(self.confirm_saving_button)
+        saving_button_layout.addWidget(self.saving_button)
 
 
         Sample_layout.addWidget(self.sample_picture_label)
@@ -243,11 +255,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
     def Confirmed_names(self):
-        self.quantify_button.setEnabled(True)
+        #Let user use buttons:
         self.use_for_mask_button.setEnabled(True)
         self.next_element_button.setEnabled(True)
-        self.previous_element_button.setEnabled(True)  
+        self.previous_element_button.setEnabled(True)
+        self.Prefere_folder.setPlaceholderText("Choose pattern folder")
 
+        #setting custom names in folder:
         self.Main_Folder_Path = str(self.Main_folder.text())
         # self.Pixel_size = str(self.Pixel.text())
         # self.inputfile = str(self.Inputfile.text())
@@ -260,21 +274,16 @@ class MainWindow(QMainWindow):
         self.Zeropeak = "zeropeak"
         self.Scater = "scater"
         self.Sample_Matrix = "sample_matrix"
-        
-                #the main code
+                
+        #finding and listing only subfolders (for excluding inpufile)
         path = Path(self.Main_Folder_Path)
-        file_names = os.listdir(path)
-        print(file_names)
-        if file_names:
-            if file_names[0].split(".")[0] != self.inputfile:
-                first_file = file_names[0]
-            else:
-                first_file = file_names[1]
-            prename = first_file.split("__")[0]
-            print(prename)
-            with open(os.path.join(path,"lambda_Ci_average.txt"),"w") as f:
-                f.write("")
-            print(os.path.join(path,"lambda_Ci_average.txt"))
+        path_insides = os.listdir(path)
+        folders_names = [file for file in path_insides if os.path.isdir(os.path.join(self.Main_Folder_Path,file)) ]
+        self.Prefere_folder.addItems(folders_names)
+        self.Prefere_folder.setEnabled(True)
+        
+    def prefered_folder_selected(self):
+        sth
 
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)  
@@ -290,40 +299,7 @@ class MainWindow(QMainWindow):
         self.sample_picture_label.setPixmap(self.sample_pixmap)
         self.resize(self.sample_pixmap.width(), self.sample_pixmap.height())
 
-        #the main code
-        path = Path(self.Main_Folder_Path)
-        file_names = os.listdir(path)
-        if file_names:
-            first_file = file_names[0]
-            prename = first_file.split("__")[0]
-            print(prename)
-            with open(f"{path}\\lambda_Ci_average.txt", "w") as f:
-                f.write("")
-         # wczytanie pliku z kalibracją pierwiastków
-            with open("test_folder\\inputfile.txt", "rt") as elements_file:
-                # a dictionary with values of K
-                elements_dict = {}
-                # a dictionary with values of energies (u_Eeffi)
-                energy_elements_dict = {}
-                # a dictionary with values of Z-number
-                Z_element = {}
-                for line in elements_file:
-                    columns = line.strip().split()
-                    element = columns[1]
-                    k_value = columns[2]
-                    energy = columns[3]
-                    Z_number = columns[0]
-                    elements_dict[element] = k_value
-                    energy_elements_dict[element] = energy
-                    Z_element[element] = Z_number
-            #print(elements_dict)
-            with open(f"{path}\\Inputs\\{self.Sample_Matrix}.txt", "rt") as sample_matrix_file:
-                sample_dict = {}
-                for line in sample_matrix_file:
-                    columns = line.strip().split()
-                    element = columns[0]
-                    concentration = columns[1]
-                    sample_dict[element] = concentration
+
 
     def Previous_element(self):
         print("go back")
