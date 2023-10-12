@@ -249,12 +249,32 @@ class MainWindow(QMainWindow):
         self.previous_element_button.setEnabled(True)  
 
         self.Main_Folder_Path = str(self.Main_folder.text())
-        self.Pixel_size = str(self.Pixel.text())
-        self.inputfile = str(self.Inputfile.text())
-        self.Zeropeak = str(self.Zeropeak.text())
-        self.Scater = str(self.Scater.text())
-        self.Sample_Matrix = str(self.SampMatrix.text())
+        # self.Pixel_size = str(self.Pixel.text())
+        # self.inputfile = str(self.Inputfile.text())
+        # self.Zeropeak = str(self.Zeropeak.text())
+        # self.Scater = str(self.Scater.text())
+        # self.Sample_Matrix = str(self.SampMatrix.text())
         self.element_for_mask = str(self.Mask_value_label.text())
+        self.Pixel_size = 5
+        self.inputfile = "inputfile"
+        self.Zeropeak = "zeropeak"
+        self.Scater = "scater"
+        self.Sample_Matrix = "sample_matrix"
+        
+                #the main code
+        path = Path(self.Main_Folder_Path)
+        file_names = os.listdir(path)
+        print(file_names)
+        if file_names:
+            if file_names[0].split(".")[0] != self.inputfile:
+                first_file = file_names[0]
+            else:
+                first_file = file_names[1]
+            prename = first_file.split("__")[0]
+            print(prename)
+            with open(os.path.join(path,"lambda_Ci_average.txt"),"w") as f:
+                f.write("")
+            print(os.path.join(path,"lambda_Ci_average.txt"))
 
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)  
@@ -264,15 +284,6 @@ class MainWindow(QMainWindow):
 
     def ChooseMask(self):
         self.Mask_value_label.setText(str(self.element_name_label))
-        
-        #the main code
-        path = Path(self.Main_Folder_Path)
-        file_names = os.listdir(path)
-        print(file_names)
-        if file_names:
-            first_file = file_names[0]
-            prename = first_file.split("__")[0]
-            print(prename)
 
     def Quantify(self):
         
