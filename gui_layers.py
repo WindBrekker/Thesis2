@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
     #sub saving_layout
         saving_button_layout = QHBoxLayout()
     #sub Left_layout
-        Sample_layout = QVBoxLayout()
+        Sample_layout = QHBoxLayout()
         # Sample_layout.addWidget(Color("pink"))
         Panel_layout = QHBoxLayout()
         # Panel_layout.addWidget(Color("orange"))
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         self.Lambda_label = QLabel(self)
         self.Lambda_label.setText("Save the lambda map:")
         self.sample_picture_label = QLabel(self)
-        self.sample_picture_label.setText("Sample_photo")
+        self.sample_picture_label2 = QLabel(self)
         self.element_name_label = QLabel(self)
         self.element_name_label.setText("element of suprise")
         self.Cursor_data_label = QLabel("Cursor data",self)
@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
         self.Max_label = QLabel("Max:",self)
         self.Max_value_label = QLabel("",self)
         self.Mask_label = QLabel("Mask:",self)
-        self.Mask_value_label = QLabel("K",self)
+        self.Mask_value_label = QLabel("P",self)
         self.input_info_label = QLabel("Enter the appropriate values",self)
         self.names_inof_label = QLabel("Enter used nomenclature",self)
 
@@ -161,6 +161,7 @@ class MainWindow(QMainWindow):
 
         # #QPixmap
         self.sample_pixmap = QPixmap('photo.png')
+        self.sample_pixmap_2 = QPixmap('photo.png')
 
 
         # #QPushButton
@@ -214,6 +215,7 @@ class MainWindow(QMainWindow):
 
 
         Sample_layout.addWidget(self.sample_picture_label)
+        Sample_layout.addWidget(self.sample_picture_label2)
 
         Panel_layout.addWidget(self.element_name_label)
         Panel_layout.addWidget(self.previous_element_button)
@@ -332,7 +334,38 @@ class MainWindow(QMainWindow):
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
         utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{prename}_livetime_map")))
 
-            
+        # wczytywanie mapy fosforu do maski
+        element_for_mask = self.Mask_value_label.text()
+        table_of_mask = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path, self.chosen_folder, f"{prename}__{element_for_mask}.txt")))
+        
+        # baza do maski - zerowanie wartości poniżej 10% max wartości l zliczeń pierwiastka maski w próbce
+        maxof_masktable = max([sublist[-1] for sublist in table_of_mask])
+        # print(maxof_masktable)
+        procent = 0.1
+        mask = [
+            [0 for j in range(len(table_of_mask[0]))] for i in range(len(table_of_mask))
+        ]
+        for i in range(len(table_of_mask)):
+            for j in range(len(table_of_mask[0])):
+                if table_of_mask[i][j] < (procent * maxof_masktable):
+                    mask[i][j] = 0
+                else:
+                    mask[i][j] = 1
+        utils.output_to_file(mask, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"{prename}_mask")))            
+        plt.imshow(mask, cmap="hot", interpolation="nearest")
+        plt.title("Mask heatmap")
+        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")))
+        plt.close()
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        
+        plt.imshow(os.path.join(self.Main_Folder_Path,self.chosen_folder,), cmap="hot", interpolation="nearest")
+        plt.title("Mask heatmap")
+        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")))
+        plt.close()
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        
             
 
     def Confirmed_saving(self):
@@ -345,11 +378,7 @@ class MainWindow(QMainWindow):
         self.Mask_value_label.setText(str(self.element_name_label))
 
     def Quantify(self):
-        
-        self.sample_picture_label.setPixmap(self.sample_pixmap)
-        self.resize(self.sample_pixmap.width(), self.sample_pixmap.height())
-
-
+        print("Quantify")
 
     def Previous_element(self):
         print("go back")

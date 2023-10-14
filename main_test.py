@@ -76,6 +76,7 @@ for root, directories, files in os.walk(root_directory):
                     if table_of_P[i][j] < (procent * maxoftableP):
                         mask[i][j] = 0
                     else:
+
                         mask[i][j] = 1
             utils.output_to_file(mask, f"{path}/{prename}_mask")
 
