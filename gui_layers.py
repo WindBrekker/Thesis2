@@ -1,5 +1,6 @@
 import sys
 import os
+import utils
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -259,6 +260,7 @@ class MainWindow(QMainWindow):
         self.use_for_mask_button.setEnabled(True)
         self.next_element_button.setEnabled(True)
         self.previous_element_button.setEnabled(True)
+        self.Prefere_folder.clear() 
         self.Prefere_folder.setPlaceholderText("Choose pattern folder")
 
         #setting custom names in folder:
@@ -283,7 +285,55 @@ class MainWindow(QMainWindow):
         self.Prefere_folder.setEnabled(True)
         
     def prefered_folder_selected(self):
-        sth
+        #set the prefered folder as a variable
+        self.chosen_folder = self.Prefere_folder.currentText()
+        
+        #Unpacking inputfile to a dictioary
+        with open(Path(os.path.join(self.Main_Folder_Path,f"{self.inputfile}.txt")),"rt") as elements_file:  
+            # a dictionary with values of K
+            self.elements_dict = {}
+            # a dictionary with values of energies (u_Eeffi)
+            self.energy_elements_dict = {}
+            # a dictionary with values of Z-number
+            self.Z_element = {}
+            for line in elements_file:
+                columns = line.strip().split()
+                element = columns[1]
+                k_value = columns[2]
+                energy = columns[3]
+                Z_number = columns[0]
+                self.elements_dict[element] = k_value
+                self.energy_elements_dict[element] = energy
+                self.Z_element[element] = Z_number
+        #print(self.elements_dict)
+        
+        #Searching for prename
+        file_names = os.listdir(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder)))
+        if file_names[0] != f"{self.Sample_Matrix}.txt":
+            first_file = file_names[0]
+        else:
+            first_file = file_names[1]
+        prename = first_file.split("__")[0]
+        
+        #unpacking sample matrix
+        with open(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
+            sample_dict = {}
+            for line in sample_matrix_file:
+                columns = line.strip().split()
+                element = columns[0]
+                concentration = columns[1]
+                sample_dict[element] = concentration
+        
+        #calculating livetime with zeropeak
+        table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{prename}__{self.Zeropeak}.txt")))
+        livetime = utils.LT_calc(table_of_zeropeaks) 
+        
+        if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
+            Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
+        utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{prename}_livetime_map")))
+
+            
+            
 
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)  
