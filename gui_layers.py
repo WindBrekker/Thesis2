@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
         self.Max_label = QLabel("Max:",self)
         self.Max_value_label = QLabel("",self)
         self.Mask_label = QLabel("Mask:",self)
-        self.Mask_value_label = QLabel("P",self)
+        self.Mask_value_label = QLabel("Ca",self)
         self.input_info_label = QLabel("Enter the appropriate values",self)
         self.names_inof_label = QLabel("Enter used nomenclature",self)
 
@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
         utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{prename}_livetime_map")))
 
-        # wczytywanie mapy fosforu do maski
+        # wczytywanie mapy do maski
         element_for_mask = self.Mask_value_label.text()
         table_of_mask = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path, self.chosen_folder, f"{prename}__{element_for_mask}.txt")))
         
@@ -359,12 +359,13 @@ class MainWindow(QMainWindow):
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
         
-        plt.imshow(os.path.join(self.Main_Folder_Path,self.chosen_folder,), cmap="hot", interpolation="nearest")
-        plt.title("Mask heatmap")
-        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")))
+        plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
+        plt.title("Mask number of counts")
+        plt.colorbar()
+        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
         plt.close()
-        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
-        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
         
             
 
