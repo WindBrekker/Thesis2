@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
             first_file = file_names[0]
         else:
             first_file = file_names[1]
-        prename = first_file.split("__")[0]
+        self.prename = first_file.split("__")[0]
         
         #unpacking sample matrix
         with open(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
@@ -343,60 +343,46 @@ class MainWindow(QMainWindow):
                 sample_dict[element] = concentration
         
         #calculating livetime with zeropeak
-        table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{prename}__{self.Zeropeak}.txt")))
+        table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.Zeropeak}.txt")))
         livetime = utils.LT_calc(table_of_zeropeaks) 
         
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
-        utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{prename}_livetime_map")))
-
-        # wczytywanie mapy do maski
-        element_for_mask = self.element_name_label.text()
-        table_of_mask = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path, self.chosen_folder, f"{prename}__{element_for_mask}.txt")))
-        
-        # baza do maski - zerowanie wartości poniżej 10% max wartości l zliczeń pierwiastka maski w próbce
-        maxof_masktable = max([sublist[-1] for sublist in table_of_mask])
-        # print(maxof_masktable)
-        procent = 0.1
-        mask = [
-            [0 for j in range(len(table_of_mask[0]))] for i in range(len(table_of_mask))
-        ]
-        for i in range(len(table_of_mask)):
-            for j in range(len(table_of_mask[0])):
-                if table_of_mask[i][j] < (procent * maxof_masktable):
-                    mask[i][j] = 0
-                else:
-                    mask[i][j] = 1
-        utils.output_to_file(mask, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"{prename}_mask")))            
-        # plt.imshow(mask, cmap="hot", interpolation="nearest")
-        # plt.title("Mask heatmap")
-        # plt.savefig()
-        # plt.close()
-        utils.show_plot("no",mask,"Mask heatmap",Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")) )
+        utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map")))
+         
+        utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
-        
-        # plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
-        # plt.title("Mask number of counts")
-        # plt.colorbar()
-        # plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
-        # plt.close()
-        utils.show_plot("yes",table_of_mask,"Mask number of counts",Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
+               
         self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
-        self.sample_picture_label2.setPixmap(self.sample_pixmap2)           
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
+
 
     def Previous_element(self):
         if self.current_index > 0:
             self.current_index -= 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
+            
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+               
+        self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
         
     def Next_element(self):
         if self.current_index < len(self.elements_nodec) - 1:
             self.current_index += 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+               
+        self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
         
     def ChooseMask(self):
-        self.Mask_value_label.setText(str(self.element_name_label))
+        self.Mask_value_label.setText(str(self.element_name_label.text()))
 
     def Quantify(self):
         print("Quantify")       

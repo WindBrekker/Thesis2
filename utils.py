@@ -1,5 +1,6 @@
 import numpy as np
 import xraylib as xr
+import os
 import math
 import matplotlib.pyplot as plt
 
@@ -74,10 +75,34 @@ def lambda_factor(rho_D,Z,Eeffi,sample_dict):
 
     return correction_factror
 
-def show_plot(colorbar,list, title, path):
-        plt.imshow(list, cmap="hot", interpolation="nearest")
-        plt.title(title)
-        if colorbar == "yes":
-            plt.colorbar()
-        plt.savefig(path)
+def mask_creating(element,Path, folder, prename):
+    # wczytywanie mapy do maski
+        element_for_mask = element
+        file_path = os.path.join(Path, folder, f"{prename}__{element_for_mask}.txt")
+        table_of_mask = file_to_list(file_path)        
+    # baza do maski - zerowanie wartości poniżej 10% max wartości l zliczeń pierwiastka maski w próbce
+        maxof_masktable = max([sublist[-1] for sublist in table_of_mask])
+        # print(maxof_masktable)
+        procent = 0.1
+        mask = [
+            [0 for j in range(len(table_of_mask[0]))] for i in range(len(table_of_mask))
+        ]
+        for i in range(len(table_of_mask)):
+            for j in range(len(table_of_mask[0])):
+                if table_of_mask[i][j] < (procent * maxof_masktable):
+                    mask[i][j] = 0
+                else:
+                    mask[i][j] = 1
+        output_to_file(mask, os.path.join(Path,f"{folder}_output", f"{prename}_mask"))           
+
+        
+        plt.imshow(mask, cmap="hot", interpolation="nearest")
+        plt.title("Mask heatmap")
+        plt.savefig(os.path.join(Path,f"{folder}_output","mask.png"))
+        plt.close()
+
+        plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
+        plt.title("Mask number of counts")
+        plt.colorbar()
+        plt.savefig(os.path.join(Path,f"{folder}_output","mask_noc.png"))
         plt.close()
