@@ -1,6 +1,7 @@
 import numpy as np
 import xraylib as xr
 import math
+import matplotlib.pyplot as plt
 
 
 def file_to_list(input):
@@ -73,16 +74,10 @@ def lambda_factor(rho_D,Z,Eeffi,sample_dict):
 
     return correction_factror
 
-
-
-
-
-
-
-#print(energy)
-# list_one = file_to_list(input)
-# list_two = direct_factor(list_one)
-# print(list_two)
-# print(type(list_two))
-# print(type(list_two[0][0]))
-# print(type(list_two[0]))
+def show_plot(colorbar,list, title, path):
+        plt.imshow(list, cmap="hot", interpolation="nearest")
+        plt.title(title)
+        if colorbar == "yes":
+            plt.colorbar()
+        plt.savefig(path)
+        plt.close()

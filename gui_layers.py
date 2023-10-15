@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         self.sample_picture_label = QLabel(self)
         self.sample_picture_label2 = QLabel(self)
         self.element_name_label = QLabel(self)
-        self.element_name_label.setText("element of suprise")
+        self.element_name_label.setText("None")
         self.Cursor_data_label = QLabel("Cursor data",self)
         self.X_label = QLabel("X:",self)
         self.X_value_label = QLabel("",self)
@@ -120,7 +120,8 @@ class MainWindow(QMainWindow):
         self.Max_label = QLabel("Max:",self)
         self.Max_value_label = QLabel("",self)
         self.Mask_label = QLabel("Mask:",self)
-        self.Mask_value_label = QLabel("Ca",self)
+        self.Mask_value_label2 = QLabel("Current element:",self)
+        self.Mask_value_label = QLabel("None",self)
         self.input_info_label = QLabel("Enter the appropriate values",self)
         self.names_inof_label = QLabel("Enter used nomenclature",self)
 
@@ -217,6 +218,7 @@ class MainWindow(QMainWindow):
         Sample_layout.addWidget(self.sample_picture_label)
         Sample_layout.addWidget(self.sample_picture_label2)
 
+        Panel_layout.addWidget(self.Mask_value_label2)
         Panel_layout.addWidget(self.element_name_label)
         Panel_layout.addWidget(self.previous_element_button)
         Panel_layout.addWidget(self.next_element_button)
@@ -287,8 +289,22 @@ class MainWindow(QMainWindow):
         self.Prefere_folder.setEnabled(True)
         
     def prefered_folder_selected(self):
+        self.current_index = 0
         #set the prefered folder as a variable
         self.chosen_folder = self.Prefere_folder.currentText()
+        
+        #listing the elements inside
+        self.elements_nodec = []
+        path = Path(os.path.join(self.Main_Folder_Path, self.chosen_folder))
+        path_insides = os.listdir(path)
+        for file in path_insides:
+            if file != f"{self.Sample_Matrix}.txt":
+                if file.split("__")[1] != f"{self.Scater}.txt" and file.split("__")[1] != f"{self.Zeropeak}.txt":
+                    self.elements_nodec.append(file.split("__")[1].split(".")[0])
+        print(self.elements_nodec)
+        
+        self.element_name_label.setText(self.elements_nodec[0])
+        
         
         #Unpacking inputfile to a dictioary
         with open(Path(os.path.join(self.Main_Folder_Path,f"{self.inputfile}.txt")),"rt") as elements_file:  
@@ -335,7 +351,7 @@ class MainWindow(QMainWindow):
         utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{prename}_livetime_map")))
 
         # wczytywanie mapy do maski
-        element_for_mask = self.Mask_value_label.text()
+        element_for_mask = self.element_name_label.text()
         table_of_mask = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path, self.chosen_folder, f"{prename}__{element_for_mask}.txt")))
         
         # baza do maski - zerowanie wartości poniżej 10% max wartości l zliczeń pierwiastka maski w próbce
@@ -352,43 +368,45 @@ class MainWindow(QMainWindow):
                 else:
                     mask[i][j] = 1
         utils.output_to_file(mask, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"{prename}_mask")))            
-        plt.imshow(mask, cmap="hot", interpolation="nearest")
-        plt.title("Mask heatmap")
-        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")))
-        plt.close()
+        # plt.imshow(mask, cmap="hot", interpolation="nearest")
+        # plt.title("Mask heatmap")
+        # plt.savefig()
+        # plt.close()
+        utils.show_plot("no",mask,"Mask heatmap",Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png")) )
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
         
-        plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
-        plt.title("Mask number of counts")
-        plt.colorbar()
-        plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
-        plt.close()
+        # plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
+        # plt.title("Mask number of counts")
+        # plt.colorbar()
+        # plt.savefig(Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
+        # plt.close()
+        utils.show_plot("yes",table_of_mask,"Mask number of counts",Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png")))
         self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
-        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
-        
-            
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)           
 
+    def Previous_element(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.element_name_label.setText(self.elements_nodec[self.current_index])
+        
+    def Next_element(self):
+        if self.current_index < len(self.elements_nodec) - 1:
+            self.current_index += 1
+            self.element_name_label.setText(self.elements_nodec[self.current_index])
+        
+    def ChooseMask(self):
+        self.Mask_value_label.setText(str(self.element_name_label))
+
+    def Quantify(self):
+        print("Quantify")       
+        
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)  
   
     def Saving(self):
         print("Saved")
 
-    def ChooseMask(self):
-        self.Mask_value_label.setText(str(self.element_name_label))
-
-    def Quantify(self):
-        print("Quantify")
-
-    def Previous_element(self):
-        print("go back")
-        #change element to previous one
-        #make heatmap with plt    
-
-    def Next_element(self):
-        print("Next")
-        
 
 app = QApplication(sys.argv)
 

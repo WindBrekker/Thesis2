@@ -172,7 +172,6 @@ for root, directories, files in os.walk(root_directory):
                     plt.colorbar()
                     plt.savefig(f"{path}/{element}_Ci_plot.png")
                     # plt.close()
-                    plt.open()
 
                 else:
                     continue
