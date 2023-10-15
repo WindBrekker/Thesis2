@@ -301,7 +301,6 @@ class MainWindow(QMainWindow):
             if file != f"{self.Sample_Matrix}.txt":
                 if file.split("__")[1] != f"{self.Scater}.txt" and file.split("__")[1] != f"{self.Zeropeak}.txt":
                     self.elements_nodec.append(file.split("__")[1].split(".")[0])
-        print(self.elements_nodec)
         
         self.element_name_label.setText(self.elements_nodec[0])
         
