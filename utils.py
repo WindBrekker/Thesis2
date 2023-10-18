@@ -94,7 +94,7 @@ def mask_creating(element,Path, folder, prename):
                 else:
                     mask[i][j] = 1
         output_to_file(mask, os.path.join(Path,f"{folder}_output", f"{prename}_mask"))           
-
+        
         
         plt.imshow(mask, cmap="hot", interpolation="nearest")
         plt.title("Mask heatmap")
@@ -106,3 +106,6 @@ def mask_creating(element,Path, folder, prename):
         plt.colorbar()
         plt.savefig(os.path.join(Path,f"{folder}_output","mask_noc.png"))
         plt.close()
+        return mask
+
+            

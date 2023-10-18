@@ -1,0 +1,8 @@
+prename _ element -> mnożymy przez maskę -> dzielimy na livetime i Ki -> smi_table -> smi/sm/lambda = Ci 
+prename _ element -> maska  
+prename _ scater -> scater / livetime = sm_livetime -> mnożymy przez A i dodajemy B -> sm -> wspólczynnik lambda na próbkę pośrednią 
+
+
+prename _ zeropeak -> mnożymy przez A i dodajemy B = livetime
+sample _ matrix(skład matrycy) -> sample _ dict(procent)  
+inputfile(energia, lba atomowa, nazwa, K_i) -> elements _ dict -> Ki

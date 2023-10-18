@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QLineEdit,
     QLabel,
-    QFileDialog,
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -19,9 +18,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QComboBox,
 )
-
-
-
 
 class Color(QWidget):
 
@@ -132,7 +128,7 @@ class MainWindow(QMainWindow):
         self.Main_folder.setPlaceholderText("Main folder path")
 
         self.Pixel = QLineEdit(self)
-        self.Pixel.setPlaceholderText("Pixel size")
+        self.Pixel.setPlaceholderText("Pixel size [um]")
 
         self.Inputfile = QLineEdit(self)
         self.Inputfile.setPlaceholderText("Inputfile")
@@ -284,8 +280,8 @@ class MainWindow(QMainWindow):
         #finding and listing only subfolders (for excluding inpufile)
         path = Path(self.Main_Folder_Path)
         path_insides = os.listdir(path)
-        folders_names = [file for file in path_insides if os.path.isdir(os.path.join(self.Main_Folder_Path,file)) ]
-        self.Prefere_folder.addItems(folders_names)
+        self.folders_names = [file for file in path_insides if os.path.isdir(os.path.join(self.Main_Folder_Path,file)) ]
+        self.Prefere_folder.addItems(self.folders_names)
         self.Prefere_folder.setEnabled(True)
         
     def prefered_folder_selected(self):
@@ -334,28 +330,26 @@ class MainWindow(QMainWindow):
         
         #unpacking sample matrix
         with open(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
-            sample_dict = {}
+            self.sample_dict = {}
             for line in sample_matrix_file:
                 columns = line.strip().split()
                 element = columns[0]
                 concentration = columns[1]
-                sample_dict[element] = concentration
+                self.sample_dict[element] = concentration
         
         #calculating livetime with zeropeak
         table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.Zeropeak}.txt")))
-        livetime = utils.LT_calc(table_of_zeropeaks) 
+        self.livetime = utils.LT_calc(table_of_zeropeaks) 
         
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
-        utils.output_to_file(livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map")))
-         
-        utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        utils.output_to_file(self.livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map"))) 
+        self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
         self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
         self.sample_picture_label2.setPixmap(self.sample_pixmap2)
-
 
     def Previous_element(self):
         if self.current_index > 0:
@@ -382,12 +376,111 @@ class MainWindow(QMainWindow):
         
     def ChooseMask(self):
         self.Mask_value_label.setText(str(self.element_name_label.text()))
+        self.quantify_button.setEnabled(True)
 
     def Quantify(self):
-        print("Quantify")       
+        for f in self.folders_names:
+            self.chosen_folder = f
+            if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
+                Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
+            for key in self.Z_element:
+                    element = key
+                    if file_exists(os.path.join(self.Main_Folder_Path,self.chosen_folder,  f"{self.prename}__{element}.txt")):
+                        K_i = float(self.elements_dict[element])
+                        K_i = K_i * 1000000000
+                        counts_data = os.path.join(self.Main_Folder_Path, self.chosen_folder,f"{self.prename}__{element}.txt")
+                        counts_table = utils.file_to_list(counts_data)
+                        table_of_smi = [
+                            [0 for j in range(len(counts_table[0]))]
+                            for i in range(len(counts_table))
+                        ]
+
+                        for i in range(len(counts_table)):
+                            for j in range(len(counts_table[0])):
+                                table_of_smi[i][j] = (
+                                    ((float(counts_table[i][j]) * float(self.mask_map[i][j])))
+                                    / float(self.livetime[i][j])
+                                    / (float(K_i))
+                                ) # dzielimy przez 10^9 by zmieni jednostki z cm^2/ug/ms -> cm^2/(g*s) w K_i.
+                                # Calosc mamy w g/g
+                        utils.output_to_file(table_of_smi, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))                        
+                        sm = []
+                        
+                        scater_tab = []
+
+                        scater_tab = utils.file_to_list(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.Scater}.txt"))
+
+                        sm_livetime = [[0 for j in range(len(scater_tab[0]))]for i in range(len(scater_tab))]
+                        
+                        for i in range(len(scater_tab)):
+                            for j in range(len(scater_tab[0])):
+                                sm_livetime[i][j] = float(scater_tab[i][j]) / float(self.livetime[i][j])
+
+                        sm = utils.SampSM_calc(sm_livetime)
+                        sm_masked = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
+                        for i in range(len(scater_tab)):
+                            for j in range(len(scater_tab[0])):
+                                sm_masked[i][j] = sm[i][j] * self.mask_map[i][j]
+
+                        Ci_table = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
+                        lambda_factor = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
+                        Ci_sum_factor = 0
+                        lambda_sum_factor = 0
+                        loop_counts = 0
+                        utils.output_to_file(sm,os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_sm"))
+
+                        for i in range(len(sm)):
+                            for j in range(len(sm[0])):
+                                if table_of_smi[i][j] != 0:
+                                    lambda_factor[i][j] = utils.lambda_factor(
+                                        sm[i][j],
+                                        int(self.Z_element[element]),
+                                        float(self.energy_elements_dict[element]),
+                                        self.sample_dict,
+                                    )
+                                    lambda_sum_factor += lambda_factor[i][j]
+                                    loop_counts += 1
+
+                                    Ci_table[i][j] = (
+                                        table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
+                                    )
+                                    Ci_sum_factor += Ci_table[i][j]
+                                else:
+                                    continue
+                        lambda_average_factor = lambda_sum_factor / loop_counts
+                        Ci_average_factor = Ci_sum_factor / loop_counts
+
+                        with open( os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"lambda_Ci_average.txt"), "a") as f:
+                            f.write(
+                                f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci: {format(Ci_average_factor, ".2e")}, \n'
+                            )                        
+                        
+                        utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
+                        
+                        plt.imshow(Ci_table, cmap="hot", interpolation="nearest")
+                        plt.title(f"{element}_Ci_plot")
+                        plt.colorbar()
+                        plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi."))
+                        plt.close()
+                        print(self.chosen_folder, element, K_i)
+
+                    else:
+                        continue
+
+                
+
+        print("Dziękuję za korzystanie z SliceQuant")
+        exit()
+        
+        
+             
         
     def Confirmed_saving(self):
-        self.saving_button.setEnabled(True)  
+        self.saving_button.setEnabled(True)
+        self.saving_Ci = str(self.Ci_combobox.currentText())
+        self.saving_sm =  str(self.SM_combobox.currentText())
+        self.saving_lambda = str(self.Lambda_combobox.currentText())
+        self.saving_livetime = str(self.Livetime_combobox.currentText())      
   
     def Saving(self):
         print("Saved")
@@ -399,3 +492,14 @@ window = MainWindow()
 window.show()
 
 app.exec()
+
+
+# sample_matrix do folderu wyżej
+# prename oddzielony JEDNĄŚ LUB WIELOPMA podłogami
+# default value do inputfile 
+# scater inputfile
+# treshold = 10% default
+# scalebar -> jeśli sie uda
+# colorbar i nowy kolorek.
+
+
