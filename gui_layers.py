@@ -3,6 +3,7 @@ import os
 import utils
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from pathlib import Path
 from os.path import exists as file_exists
 from PyQt6.QtGui import QPalette, QColor, QIcon, QAction, QPixmap
@@ -67,6 +68,10 @@ class MainWindow(QMainWindow):
         # Sample_layout.addWidget(Color("pink"))
         Panel_layout = QHBoxLayout()
         # Panel_layout.addWidget(Color("orange"))
+    #input_layout
+        main_folder_layout = QHBoxLayout()
+        pixel_size_layout = QHBoxLayout()
+        text_layout = QHBoxLayout()
 
         #Adding layouts
         pagelayout.addLayout(Upper_layout,1)
@@ -85,9 +90,18 @@ class MainWindow(QMainWindow):
         Data_layout.addLayout(Names_layout,3)
         Data_layout.addLayout(Saving_layout,5)
         Data_layout.addLayout(saving_button_layout,1)
+        
+        Input_layout.addLayout(main_folder_layout,4)
+        Input_layout.addLayout(text_layout,3)
+        Input_layout.addLayout(pixel_size_layout,3)
+        
 
         #Widgets
         #QLabel
+        self.Treshold_txt_label = QLabel("Treshold = ",self)
+        self.Treshold_unit_label = QLabel("%",self)
+        self.pixel_size_txt_label = QLabel("Pixel size = ",self)
+        self.pixel_size_unit_label = QLabel("[um]",self)
         self.Ci_label = QLabel(self)
         self.Ci_label.setText("Save the Ci map:")
         self.SM_label = QLabel(self)
@@ -118,29 +132,32 @@ class MainWindow(QMainWindow):
         self.Mask_label = QLabel("Mask:",self)
         self.Mask_value_label2 = QLabel("Current element:",self)
         self.Mask_value_label = QLabel("None",self)
-        self.input_info_label = QLabel("Enter the appropriate values",self)
-        self.names_inof_label = QLabel("Enter used nomenclature",self)
+        self.input_info_label = QLabel("Enter the appropriate values*",self)
+        self.names_inof_label = QLabel("(optional)Enter used nomenclature",self)
 
-
+  
 
         # #QLineEdit
         self.Main_folder = QLineEdit(self)
         self.Main_folder.setPlaceholderText("Main folder path")
 
         self.Pixel = QLineEdit(self)
-        self.Pixel.setPlaceholderText("Pixel size [um]")
+        self.Pixel.setPlaceholderText("1000")
 
         self.Inputfile = QLineEdit(self)
-        self.Inputfile.setPlaceholderText("Inputfile")
+        self.Inputfile.setPlaceholderText("inputfile")
 
         self.Zeropeak = QLineEdit(self)
-        self.Zeropeak.setPlaceholderText("Zeropeak")
+        self.Zeropeak.setPlaceholderText("zeropeak")
 
-        self.Scater = QLineEdit(self)
-        self.Scater.setPlaceholderText("Scater")
+        self.Scater = QLineEdit(self)    
+        self.Scater.setPlaceholderText("scater")
 
         self.SampMatrix = QLineEdit(self)
-        self.SampMatrix.setPlaceholderText("Sample Matrix")
+        self.SampMatrix.setPlaceholderText("sample_matrix")
+        
+        self.Treshold = QLineEdit(self)
+        self.Treshold.setPlaceholderText("10")
 
         # #QComboBox
         self.Ci_combobox = QComboBox(self)
@@ -186,9 +203,13 @@ class MainWindow(QMainWindow):
 
 
         # #Adding widgets
-        Input_layout.addWidget(self.input_info_label)
-        Input_layout.addWidget(self.Main_folder)
-        Input_layout.addWidget(self.Pixel)
+        main_folder_layout.addWidget(self.Main_folder)
+        text_layout.addWidget(self.Treshold_txt_label)
+        text_layout.addWidget(self.Treshold)
+        text_layout.addWidget(self.Treshold_unit_label)
+        pixel_size_layout.addWidget(self.pixel_size_txt_label)
+        pixel_size_layout.addWidget(self.Pixel)
+        pixel_size_layout.addWidget(self.pixel_size_unit_label)
 
         Names_layout.addWidget(self.names_inof_label)
         Names_layout.addWidget(self.Inputfile)
@@ -265,17 +286,24 @@ class MainWindow(QMainWindow):
 
         #setting custom names in folder:
         self.Main_Folder_Path = str(self.Main_folder.text())
-        # self.Pixel_size = str(self.Pixel.text())
-        # self.inputfile = str(self.Inputfile.text())
-        # self.Zeropeak = str(self.Zeropeak.text())
-        # self.Scater = str(self.Scater.text())
-        # self.Sample_Matrix = str(self.SampMatrix.text())
+        self.Pixel_size = str(self.Pixel.text())
+        self.inputfile = str(self.Inputfile.text())
+        self.zeropeak = str(self.Zeropeak.text())
+        self.Sample_Matrix = str(self.SampMatrix.text())
+
         self.element_for_mask = str(self.Mask_value_label.text())
-        self.Pixel_size = 5
-        self.inputfile = "inputfile"
-        self.Zeropeak = "zeropeak"
-        self.Scater = "scater"
-        self.Sample_Matrix = "sample_matrix"
+        if self.Pixel_size == "":
+            self.Pixel_size = 5
+        if self.inputfile == "":
+            self.inputfile = "inputfile"
+        if self.zeropeak == "":
+            self.zeropeak = "zeropeak"
+        if self.scater == "":
+            self.scater = "scater"
+        if self. Sample_Matrix== "":
+            self.Sample_Matrix = "sample_matrix"
+            
+        print(self.Pixel_size,self.inputfile, self.zeropeak, self.scater, self.Sample_Matrix)
                 
         #finding and listing only subfolders (for excluding inpufile)
         path = Path(self.Main_Folder_Path)
@@ -294,9 +322,8 @@ class MainWindow(QMainWindow):
         path = Path(os.path.join(self.Main_Folder_Path, self.chosen_folder))
         path_insides = os.listdir(path)
         for file in path_insides:
-            if file != f"{self.Sample_Matrix}.txt":
-                if file.split("__")[1] != f"{self.Scater}.txt" and file.split("__")[1] != f"{self.Zeropeak}.txt":
-                    self.elements_nodec.append(file.split("__")[1].split(".")[0])
+            if file.split("__")[1] != f"{self.scater}.txt" and file.split("__")[1] != f"{self.zeropeak}.txt":
+                self.elements_nodec.append(file.split("__")[1].split(".")[0])
         
         self.element_name_label.setText(self.elements_nodec[0])
         
@@ -322,14 +349,11 @@ class MainWindow(QMainWindow):
         
         #Searching for prename
         file_names = os.listdir(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder)))
-        if file_names[0] != f"{self.Sample_Matrix}.txt":
-            first_file = file_names[0]
-        else:
-            first_file = file_names[1]
+        first_file = file_names[0]
         self.prename = first_file.split("__")[0]
         
         #unpacking sample matrix
-        with open(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
+        with open(Path(os.path.join(self.Main_Folder_Path,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
             self.sample_dict = {}
             for line in sample_matrix_file:
                 columns = line.strip().split()
@@ -338,7 +362,7 @@ class MainWindow(QMainWindow):
                 self.sample_dict[element] = concentration
         
         #calculating livetime with zeropeak
-        table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.Zeropeak}.txt")))
+        table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.zeropeak}.txt")))
         self.livetime = utils.LT_calc(table_of_zeropeaks) 
         
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
@@ -408,7 +432,7 @@ class MainWindow(QMainWindow):
                         
                         scater_tab = []
 
-                        scater_tab = utils.file_to_list(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.Scater}.txt"))
+                        scater_tab = utils.file_to_list(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.scater}.txt"))
 
                         sm_livetime = [[0 for j in range(len(scater_tab[0]))]for i in range(len(scater_tab))]
                         
@@ -456,13 +480,13 @@ class MainWindow(QMainWindow):
                             )                        
                         
                         utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
-                        
-                        plt.imshow(Ci_table, cmap="hot", interpolation="nearest")
+                        custom_cmap = plt.get_cmap('viridis')
+                        custom_cmap = ListedColormap(custom_cmap(np.linspace(0.2, 1, 256)))
+                        plt.imshow(Ci_table, cmap=custom_cmap, interpolation="nearest")
                         plt.title(f"{element}_Ci_plot")
                         plt.colorbar()
-                        plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi."))
+                        plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci."))
                         plt.close()
-                        print(self.chosen_folder, element, K_i)
 
                     else:
                         continue
@@ -494,12 +518,11 @@ window.show()
 app.exec()
 
 
-# sample_matrix do folderu wyżej
-# prename oddzielony JEDNĄŚ LUB WIELOPMA podłogami
-# default value do inputfile 
+# prename oddzielony JEDNĄ LUB WIELOPMA podłogami 
 # scater inputfile
 # treshold = 10% default
 # scalebar -> jeśli sie uda
 # colorbar i nowy kolorek.
+#ajust pixel size to plt scale 
 
 
