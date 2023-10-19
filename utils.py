@@ -75,7 +75,7 @@ def lambda_factor(rho_D,Z,Eeffi,sample_dict):
 
     return correction_factror
 
-def mask_creating(element,Path, folder, prename):
+def mask_creating(element,Path, folder, prename,treshold):
     # wczytywanie mapy do maski
         element_for_mask = element
         file_path = os.path.join(Path, folder, f"{prename}__{element_for_mask}.txt")
@@ -83,7 +83,7 @@ def mask_creating(element,Path, folder, prename):
     # baza do maski - zerowanie wartości poniżej 10% max wartości l zliczeń pierwiastka maski w próbce
         maxof_masktable = max([sublist[-1] for sublist in table_of_mask])
         # print(maxof_masktable)
-        procent = 0.1
+        procent = (float(treshold)/100)
         mask = [
             [0 for j in range(len(table_of_mask[0]))] for i in range(len(table_of_mask))
         ]

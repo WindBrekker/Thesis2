@@ -289,7 +289,9 @@ class MainWindow(QMainWindow):
         self.Pixel_size = str(self.Pixel.text())
         self.inputfile = str(self.Inputfile.text())
         self.zeropeak = str(self.Zeropeak.text())
+        self.scater = str(self.Scater.text())
         self.Sample_Matrix = str(self.SampMatrix.text())
+        self.treshold = str(self.Treshold.text())
 
         self.element_for_mask = str(self.Mask_value_label.text())
         if self.Pixel_size == "":
@@ -300,10 +302,12 @@ class MainWindow(QMainWindow):
             self.zeropeak = "zeropeak"
         if self.scater == "":
             self.scater = "scater"
-        if self. Sample_Matrix== "":
+        if self.Sample_Matrix== "":
             self.Sample_Matrix = "sample_matrix"
+        if self.treshold == "":
+            self.treshold = 10
             
-        print(self.Pixel_size,self.inputfile, self.zeropeak, self.scater, self.Sample_Matrix)
+        #print(self.Pixel_size,self.inputfile, self.zeropeak, self.scater, self.Sample_Matrix)
                 
         #finding and listing only subfolders (for excluding inpufile)
         path = Path(self.Main_Folder_Path)
@@ -368,7 +372,7 @@ class MainWindow(QMainWindow):
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
         utils.output_to_file(self.livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map"))) 
-        self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -380,7 +384,7 @@ class MainWindow(QMainWindow):
             self.current_index -= 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
             
-        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -391,7 +395,7 @@ class MainWindow(QMainWindow):
         if self.current_index < len(self.elements_nodec) - 1:
             self.current_index += 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
-        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename)
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -520,7 +524,6 @@ app.exec()
 
 # prename oddzielony JEDNĄ LUB WIELOPMA podłogami 
 # scater inputfile
-# treshold = 10% default
 # scalebar -> jeśli sie uda
 # colorbar i nowy kolorek.
 #ajust pixel size to plt scale 
