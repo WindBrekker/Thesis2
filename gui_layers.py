@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
 
         self.element_for_mask = str(self.Mask_value_label.text())
         if self.Pixel_size == "":
-            self.Pixel_size = 5
+            self.Pixel_size = 1000
         if self.inputfile == "":
             self.inputfile = "inputfile"
         if self.zeropeak == "":
@@ -464,7 +464,7 @@ class MainWindow(QMainWindow):
                                         sm[i][j],
                                         int(self.Z_element[element]),
                                         float(self.energy_elements_dict[element]),
-                                        self.sample_dict,
+                                        self.sample_dict
                                     )
                                     lambda_sum_factor += lambda_factor[i][j]
                                     loop_counts += 1
@@ -484,24 +484,29 @@ class MainWindow(QMainWindow):
                             )                        
                         
                         utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
+                        Ci_table = np.array(Ci_table)
+                        width_um = Ci_table.shape[1] * self.Pixel_size
+                        height_um = Ci_table.shape[0] * self.Pixel_size
+                        fig, ax = plt.subplots(figsize=(width_um / 100, height_um / 100))
+                        extent = [0, width_um, 0, height_um]
+
                         custom_cmap = plt.get_cmap('viridis')
                         custom_cmap = ListedColormap(custom_cmap(np.linspace(0.2, 1, 256)))
-                        plt.imshow(Ci_table, cmap=custom_cmap, interpolation="nearest")
+                        plt.imshow(Ci_table, extent=extent, cmap=custom_cmap, interpolation="nearest")
+                        ax.set_aspect('equal')
                         plt.title(f"{element}_Ci_plot")
+                        plt.xlabel('X (um)')
+                        plt.ylabel('Y (um)')
                         plt.colorbar()
                         plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci."))
                         plt.close()
-
+    
                     else:
                         continue
-
-                
+                                    
 
         print("Dziękuję za korzystanie z SliceQuant")
-        exit()
-        
-        
-             
+        exit()          
         
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)
@@ -526,6 +531,6 @@ app.exec()
 # scater inputfile
 # scalebar -> jeśli sie uda
 # colorbar i nowy kolorek.
-#ajust pixel size to plt scale 
+# ajust pixel size to plt scale 
 
 
