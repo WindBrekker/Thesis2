@@ -69,9 +69,10 @@ class MainWindow(QMainWindow):
         Panel_layout = QHBoxLayout()
         # Panel_layout.addWidget(Color("orange"))
     #input_layout
+        text_layout = QHBoxLayout()
         main_folder_layout = QHBoxLayout()
         pixel_size_layout = QHBoxLayout()
-        text_layout = QHBoxLayout()
+        
 
         #Adding layouts
         pagelayout.addLayout(Upper_layout,1)
@@ -91,13 +92,14 @@ class MainWindow(QMainWindow):
         Data_layout.addLayout(Saving_layout,5)
         Data_layout.addLayout(saving_button_layout,1)
         
+        Input_layout.addLayout(text_layout,2)
         Input_layout.addLayout(main_folder_layout,4)
-        Input_layout.addLayout(text_layout,3)
-        Input_layout.addLayout(pixel_size_layout,3)
+        Input_layout.addLayout(pixel_size_layout,4)
         
 
         #Widgets
         #QLabel
+        self.colorbox_label = QLabel("Choose the heatmap colors")
         self.Treshold_txt_label = QLabel("Treshold = ",self)
         self.Treshold_unit_label = QLabel("%",self)
         self.pixel_size_txt_label = QLabel("Pixel size = ",self)
@@ -133,7 +135,7 @@ class MainWindow(QMainWindow):
         self.Mask_value_label2 = QLabel("Current element:",self)
         self.Mask_value_label = QLabel("None",self)
         self.input_info_label = QLabel("Enter the appropriate values*",self)
-        self.names_inof_label = QLabel("(optional)Enter used nomenclature",self)
+        self.names_inof_label = QLabel("(optional) Enter used nomenclature",self)
 
   
 
@@ -160,6 +162,8 @@ class MainWindow(QMainWindow):
         self.Treshold.setPlaceholderText("10")
 
         # #QComboBox
+        self.colorbar_combobox = QComboBox(self)
+        self.colorbar_combobox.addItems(["viridis","plasma","inferno", "magma", "cividis", "coolwarm", "YlGnBu", "RdYlBu", "jet", "copper"])
         self.Ci_combobox = QComboBox(self)
         self.Ci_combobox.addItems(["Don't save", ".png", ".bmp", ".tiff", ".dat"])
         self.SM_combobox = QComboBox(self)
@@ -203,10 +207,11 @@ class MainWindow(QMainWindow):
 
 
         # #Adding widgets
+        text_layout.addWidget(self.input_info_label)
         main_folder_layout.addWidget(self.Main_folder)
-        text_layout.addWidget(self.Treshold_txt_label)
-        text_layout.addWidget(self.Treshold)
-        text_layout.addWidget(self.Treshold_unit_label)
+        pixel_size_layout.addWidget(self.Treshold_txt_label)
+        pixel_size_layout.addWidget(self.Treshold)
+        pixel_size_layout.addWidget(self.Treshold_unit_label)
         pixel_size_layout.addWidget(self.pixel_size_txt_label)
         pixel_size_layout.addWidget(self.Pixel)
         pixel_size_layout.addWidget(self.pixel_size_unit_label)
@@ -216,8 +221,11 @@ class MainWindow(QMainWindow):
         Names_layout.addWidget(self.Zeropeak)
         Names_layout.addWidget(self.Scater)
         Names_layout.addWidget(self.SampMatrix)
+        Names_layout.addWidget(self.colorbox_label)
+        Names_layout.addWidget(self.colorbar_combobox)
         Names_layout.addWidget(self.confirm_names_button)
         Names_layout.addWidget(self.Prefere_folder)
+        
         
         
         Saving_layout.addWidget(self.Ci_label)
@@ -292,6 +300,8 @@ class MainWindow(QMainWindow):
         self.scater = str(self.Scater.text())
         self.Sample_Matrix = str(self.SampMatrix.text())
         self.treshold = str(self.Treshold.text())
+        self.color_of_heatmap = str(self.colorbar_combobox.currentText())
+        print(self.color_of_heatmap)
 
         self.element_for_mask = str(self.Mask_value_label.text())
         if self.Pixel_size == "":
@@ -350,11 +360,25 @@ class MainWindow(QMainWindow):
                 self.energy_elements_dict[element] = energy
                 self.Z_element[element] = Z_number
         #print(self.elements_dict)
+        with open (os.path.join(self.Main_Folder_Path,"inputfile_scater.txt")) as scater_factors:
+            for line in scater_factors:
+                self.scater_dict = {}
+                columns = line.strip().split()
+                self.scater_dict["a"] = columns[0]
+                self.scater_dict["b"] = columns[1]
+        with open (os.path.join(self.Main_Folder_Path,"inputfile_zeropeak.txt")) as zeropeak_factors:
+            for line in zeropeak_factors:
+                self.zeropeak_dict = {}
+                columns = line.strip().split()
+                self.zeropeak_dict["a"] = columns[0]
+                self.zeropeak_dict["b"] = columns[1]
         
+        
+            
         #Searching for prename
         file_names = os.listdir(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder)))
         first_file = file_names[0]
-        self.prename = first_file.split("__")[0]
+        self.prename = first_file.split("_")[0]
         
         #unpacking sample matrix
         with open(Path(os.path.join(self.Main_Folder_Path,f"{self.Sample_Matrix}.txt")),"rt") as sample_matrix_file:  
@@ -367,12 +391,12 @@ class MainWindow(QMainWindow):
         
         #calculating livetime with zeropeak
         table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.zeropeak}.txt")))
-        self.livetime = utils.LT_calc(table_of_zeropeaks) 
+        self.livetime = utils.LT_calc(table_of_zeropeaks,self.zeropeak_dict["a"],self.zeropeak_dict["b"]) 
         
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
         utils.output_to_file(self.livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map"))) 
-        self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
+        self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold,self.color_of_heatmap)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -384,7 +408,7 @@ class MainWindow(QMainWindow):
             self.current_index -= 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
             
-        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold,self.color_of_heatmap)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -395,7 +419,7 @@ class MainWindow(QMainWindow):
         if self.current_index < len(self.elements_nodec) - 1:
             self.current_index += 1
             self.element_name_label.setText(self.elements_nodec[self.current_index])
-        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold)
+        utils.mask_creating(self.elements_nodec[self.current_index],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold,self.color_of_heatmap)
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -444,7 +468,7 @@ class MainWindow(QMainWindow):
                             for j in range(len(scater_tab[0])):
                                 sm_livetime[i][j] = float(scater_tab[i][j]) / float(self.livetime[i][j])
 
-                        sm = utils.SampSM_calc(sm_livetime)
+                        sm = utils.SampSM_calc(sm_livetime,self.scater_dict["a"],self.scater_dict["b"])
                         sm_masked = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
                         for i in range(len(scater_tab)):
                             for j in range(len(scater_tab[0])):
@@ -485,18 +509,15 @@ class MainWindow(QMainWindow):
                         
                         utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
                         Ci_table = np.array(Ci_table)
-                        width_um = Ci_table.shape[1] * self.Pixel_size
-                        height_um = Ci_table.shape[0] * self.Pixel_size
-                        fig, ax = plt.subplots(figsize=(width_um / 100, height_um / 100))
-                        extent = [0, width_um, 0, height_um]
-
-                        custom_cmap = plt.get_cmap('viridis')
-                        custom_cmap = ListedColormap(custom_cmap(np.linspace(0.2, 1, 256)))
-                        plt.imshow(Ci_table, extent=extent, cmap=custom_cmap, interpolation="nearest")
-                        ax.set_aspect('equal')
+                        width_um = Ci_table.shape[1]
+                        height_um = Ci_table.shape[0]
+                        plt.xlim(0, (width_um/10000 * float(self.Pixel_size)))
+                        plt.ylim(0, (height_um/10000 * float(self.Pixel_size)))
+                        # custom_cmap = ListedColormap(custom_cmap(np.linspace(0.2, 1, 256)))
+                        plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
                         plt.title(f"{element}_Ci_plot")
-                        plt.xlabel('X (um)')
-                        plt.ylabel('Y (um)')
+                        plt.xlabel('X (cm)')
+                        plt.ylabel('Y (cm)')
                         plt.colorbar()
                         plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci."))
                         plt.close()
@@ -527,10 +548,7 @@ window.show()
 app.exec()
 
 
-# prename oddzielony JEDNĄ LUB WIELOPMA podłogami 
-# scater inputfile
 # scalebar -> jeśli sie uda
-# colorbar i nowy kolorek.
 # ajust pixel size to plt scale 
 
 

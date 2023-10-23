@@ -16,18 +16,20 @@ def file_to_list(input):
         print("Couldn't find data")
         return None
 
-def LT_calc(input):
+def LT_calc(input,a,b):
 #zeropeak
+    print(a,b)
     output = []
     for i in range (len(input)):
-        output.append([(((0.05* float(input[i][j]) - 0.893)/1000)) for j in range(len(input[i]))])
+        output.append([(((float(a)* float(input[i][j]) - float(b))/1000)) for j in range(len(input[i]))])
     return output
 
-def SampSM_calc(input):
+def SampSM_calc(input,a,b):
 #scatter
+    print(a,b)
     output = []
     for i in range (len(input)):
-        output.append([(((8.07514 * float(input[i][j])) -1537.368)/1000000) for j in range(len(input[i]))])
+        output.append([(((float(a) * float(input[i][j])) - float(b))/1000000) for j in range(len(input[i]))])
     return output
 
 def output_to_file(input, output):
@@ -75,7 +77,7 @@ def lambda_factor(rho_D,Z,Eeffi,sample_dict):
 
     return correction_factror
 
-def mask_creating(element,Path, folder, prename,treshold):
+def mask_creating(element,Path, folder, prename,treshold,color):
     # wczytywanie mapy do maski
         element_for_mask = element
         file_path = os.path.join(Path, folder, f"{prename}__{element_for_mask}.txt")
@@ -96,12 +98,12 @@ def mask_creating(element,Path, folder, prename,treshold):
         output_to_file(mask, os.path.join(Path,f"{folder}_output", f"{prename}_mask"))           
         
         
-        plt.imshow(mask, cmap="hot", interpolation="nearest")
+        plt.imshow(mask, cmap=color, interpolation="nearest")
         plt.title("Mask heatmap")
         plt.savefig(os.path.join(Path,f"{folder}_output","mask.png"))
         plt.close()
 
-        plt.imshow(table_of_mask, cmap="hot", interpolation="nearest")
+        plt.imshow(table_of_mask, cmap=color, interpolation="nearest")
         plt.title("Mask number of counts")
         plt.colorbar()
         plt.savefig(os.path.join(Path,f"{folder}_output","mask_noc.png"))

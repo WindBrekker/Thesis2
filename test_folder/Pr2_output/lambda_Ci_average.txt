@@ -1,2 +1,0 @@
-element:  Na,  average lambda: 1.04e-01,    average Ci: 3.71e-03, 
-element:  Na,  average lambda: 1.04e-01,    average Ci: 3.71e-03, 
