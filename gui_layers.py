@@ -1,4 +1,5 @@
 import sys
+import shutil
 import os
 import utils
 import numpy as np
@@ -163,7 +164,7 @@ class MainWindow(QMainWindow):
 
         # #QComboBox
         self.colorbar_combobox = QComboBox(self)
-        self.colorbar_combobox.addItems(["viridis","plasma","inferno", "magma", "cividis", "coolwarm", "YlGnBu", "RdYlBu", "jet", "copper"])
+        self.colorbar_combobox.addItems(["hot","viridis","plasma","inferno", "magma", "cividis", "coolwarm", "YlGnBu", "RdYlBu", "jet", "copper"])
         self.Ci_combobox = QComboBox(self)
         self.Ci_combobox.addItems(["Don't save", ".png", ".bmp", ".tiff", ".dat"])
         self.SM_combobox = QComboBox(self)
@@ -301,7 +302,7 @@ class MainWindow(QMainWindow):
         self.Sample_Matrix = str(self.SampMatrix.text())
         self.treshold = str(self.Treshold.text())
         self.color_of_heatmap = str(self.colorbar_combobox.currentText())
-        print(self.color_of_heatmap)
+        
 
         self.element_for_mask = str(self.Mask_value_label.text())
         if self.Pixel_size == "":
@@ -322,11 +323,21 @@ class MainWindow(QMainWindow):
         #finding and listing only subfolders (for excluding inpufile)
         path = Path(self.Main_Folder_Path)
         path_insides = os.listdir(path)
-        self.folders_names = [file for file in path_insides if os.path.isdir(os.path.join(self.Main_Folder_Path,file)) ]
+        self.folders_names = [file for file in path_insides if os.path.isdir(os.path.join(self.Main_Folder_Path,file))]
         self.Prefere_folder.addItems(self.folders_names)
+        # for file in path_insides:
+        #     if os.path.isdir(os.path.join(self.Main_Folder_Path,file)):
+        #         reversed_folder = file[::-1]
+        #         if reversed_folder.split("_")[0] != "tuptuo":
+        #             self.folders_names = file   
+        #             self.Prefere_folder.addItem(self.folders_names)  
         self.Prefere_folder.setEnabled(True)
         
     def prefered_folder_selected(self):
+        folders_to_check_output = os.listdir(self.Main_Folder_Path)
+        for file in folders_to_check_output:
+            if Path(os.path.join(self.Main_Folder_Path,f"{file}_output")).exists():
+                shutil.rmtree(Path(os.path.join(self.Main_Folder_Path,f"{file}_output")))        
         self.current_index = 0
         #set the prefered folder as a variable
         self.chosen_folder = self.Prefere_folder.currentText()
@@ -336,8 +347,14 @@ class MainWindow(QMainWindow):
         path = Path(os.path.join(self.Main_Folder_Path, self.chosen_folder))
         path_insides = os.listdir(path)
         for file in path_insides:
-            if file.split("__")[1] != f"{self.scater}.txt" and file.split("__")[1] != f"{self.zeropeak}.txt":
-                self.elements_nodec.append(file.split("__")[1].split(".")[0])
+            reversed_file = file [::-1]
+            splitted_file = reversed_file.split("_")[0]
+            last_element_of_file = splitted_file[::-1]
+            if last_element_of_file.split(".")[0] != self.scater and last_element_of_file.split(".")[0] != self.zeropeak:
+                reversed_element = splitted_file.split(".")[1]
+                element = reversed_element[::-1] 
+                self.elements_nodec.append(element)
+               
         
         self.element_name_label.setText(self.elements_nodec[0])
         
@@ -511,13 +528,12 @@ class MainWindow(QMainWindow):
                         Ci_table = np.array(Ci_table)
                         width_um = Ci_table.shape[1]
                         height_um = Ci_table.shape[0]
-                        plt.xlim(0, (width_um/10000 * float(self.Pixel_size)))
-                        plt.ylim(0, (height_um/10000 * float(self.Pixel_size)))
-                        # custom_cmap = ListedColormap(custom_cmap(np.linspace(0.2, 1, 256)))
+                        plt.xlim(0, (width_um/1000 * float(self.Pixel_size)))
+                        plt.ylim((height_um/1000 * float(self.Pixel_size)),0)
                         plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
                         plt.title(f"{element}_Ci_plot")
-                        plt.xlabel('X (cm)')
-                        plt.ylabel('Y (cm)')
+                        plt.xlabel('X (mm)')
+                        plt.ylabel('Y (mm)')
                         plt.colorbar()
                         plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci."))
                         plt.close()

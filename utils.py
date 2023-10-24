@@ -18,7 +18,7 @@ def file_to_list(input):
 
 def LT_calc(input,a,b):
 #zeropeak
-    print(a,b)
+
     output = []
     for i in range (len(input)):
         output.append([(((float(a)* float(input[i][j]) - float(b))/1000)) for j in range(len(input[i]))])
@@ -26,7 +26,7 @@ def LT_calc(input,a,b):
 
 def SampSM_calc(input,a,b):
 #scatter
-    print(a,b)
+
     output = []
     for i in range (len(input)):
         output.append([(((float(a) * float(input[i][j])) - float(b))/1000000) for j in range(len(input[i]))])
