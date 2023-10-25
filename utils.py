@@ -92,7 +92,7 @@ def mask_creating(element,Path, folder, prename,treshold,color):
         for i in range(len(table_of_mask)):
             for j in range(len(table_of_mask[0])):
                 if table_of_mask[i][j] < (procent * maxof_masktable):
-                    mask[i][j] = 0
+                    mask[i][j] = 0  
                 else:
                     mask[i][j] = 1
         output_to_file(mask, os.path.join(Path,f"{folder}_output", f"{prename}_mask"))           
@@ -102,7 +102,6 @@ def mask_creating(element,Path, folder, prename,treshold,color):
         plt.title("Mask heatmap")
         plt.savefig(os.path.join(Path,f"{folder}_output","mask.png"))
         plt.close()
-
         plt.imshow(table_of_mask, cmap=color, interpolation="nearest")
         plt.title("Mask number of counts")
         plt.colorbar()

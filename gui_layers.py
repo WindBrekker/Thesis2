@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
         self.confirm_saving_button = QPushButton("Confirm",self)
         self.confirm_saving_button.clicked.connect(self.Confirmed_saving)
         
-        self.saving_button = QPushButton("Save",self)
+        self.saving_button = QPushButton("Save and Exit",self)
         self.saving_button.setEnabled(False)
         self.saving_button.clicked.connect(self.Saving)
 
@@ -528,8 +528,8 @@ class MainWindow(QMainWindow):
                         Ci_table = np.array(Ci_table)
                         width_um = Ci_table.shape[1]
                         height_um = Ci_table.shape[0]
-                        plt.xlim(0, (width_um/1000 * float(self.Pixel_size)))
-                        plt.ylim((height_um/1000 * float(self.Pixel_size)),0)
+                        plt.xlim(0, (width_um * float(self.Pixel_size)/1000))
+                        plt.ylim((height_um * float(self.Pixel_size)/1000),0)
                         plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
                         plt.title(f"{element}_Ci_plot")
                         plt.xlabel('X (mm)')
@@ -540,10 +540,12 @@ class MainWindow(QMainWindow):
     
                     else:
                         continue
-                                    
-
-        print("Dziękuję za korzystanie z SliceQuant")
-        exit()          
+        
+        self.confirm_names_button.disconnect()
+        self.previous_element_button.disconnect()
+        self.next_element_button.disconnect()
+        self.quantify_button.disconnect()           
+                                            
         
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)
@@ -554,6 +556,8 @@ class MainWindow(QMainWindow):
   
     def Saving(self):
         print("Saved")
+        print("Dziękuję za korzystanie z SliceQuant")
+        exit()  
 
 
 app = QApplication(sys.argv)
@@ -565,6 +569,5 @@ app.exec()
 
 
 # scalebar -> jeśli sie uda
-# ajust pixel size to plt scale 
-
+# min maxy
 
