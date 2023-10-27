@@ -143,22 +143,16 @@ class MainWindow(QMainWindow):
         # #QLineEdit
         self.Main_folder = QLineEdit(self)
         self.Main_folder.setPlaceholderText("Main folder path")
-
         self.Pixel = QLineEdit(self)
         self.Pixel.setPlaceholderText("1000")
-
         self.Inputfile = QLineEdit(self)
         self.Inputfile.setPlaceholderText("inputfile")
-
         self.Zeropeak = QLineEdit(self)
         self.Zeropeak.setPlaceholderText("zeropeak")
-
         self.Scater = QLineEdit(self)    
         self.Scater.setPlaceholderText("scater")
-
         self.SampMatrix = QLineEdit(self)
         self.SampMatrix.setPlaceholderText("sample_matrix")
-        
         self.Treshold = QLineEdit(self)
         self.Treshold.setPlaceholderText("10")
 
@@ -542,10 +536,24 @@ class MainWindow(QMainWindow):
                         continue
         
         self.confirm_names_button.disconnect()
+        self.confirm_names_button.setEnabled(False)
         self.previous_element_button.disconnect()
         self.next_element_button.disconnect()
-        self.quantify_button.disconnect()           
+        self.quantify_button.disconnect()
+        self.quantify_button.setText("Go back")
+        self.quantify_button.clicked.connect(self.Back_to_quantify)
+         
                                             
+
+    def Back_to_quantify(self):
+        self.quantify_button.setText("Quantify")
+        self.quantify_button.disconnect()
+        self.quantify_button.clicked.connect(self.Quantify)
+        
+    # def next_element_final(self):
+    # def previous_element_final(self):
+    # confirm_new_folder(self):
+        
         
     def Confirmed_saving(self):
         self.saving_button.setEnabled(True)
