@@ -196,9 +196,9 @@ class MainWindow(QMainWindow):
         self.confirm_saving_button = QPushButton("Confirm",self)
         self.confirm_saving_button.clicked.connect(self.Confirmed_saving)
         
-        self.saving_button = QPushButton("Save and Exit",self)
+        self.saving_button = QPushButton("Exit",self)
         self.saving_button.setEnabled(False)
-        self.saving_button.clicked.connect(self.Saving)
+        self.saving_button.clicked.connect(self.Exit)
 
 
         # #Adding widgets
@@ -281,9 +281,7 @@ class MainWindow(QMainWindow):
 
     def Confirmed_names(self):
         #Let user use buttons:
-        self.use_for_mask_button.setEnabled(True)
-        self.next_element_button.setEnabled(True)
-        self.previous_element_button.setEnabled(True)
+        self.confirm_saving_button.setEnabled(True)
         self.Prefere_folder.clear() 
         self.Prefere_folder.setPlaceholderText("Choose pattern folder")
 
@@ -408,6 +406,7 @@ class MainWindow(QMainWindow):
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
         utils.output_to_file(self.livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map"))) 
         self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold,self.color_of_heatmap)
+        
         self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
         self.sample_picture_label.setPixmap(self.sample_pixmap)
                
@@ -505,7 +504,7 @@ class MainWindow(QMainWindow):
                                     loop_counts += 1
 
                                     Ci_table[i][j] = (
-                                        table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
+                                        1000*table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
                                     )
                                     Ci_sum_factor += Ci_table[i][j]
                                 else:
@@ -515,7 +514,7 @@ class MainWindow(QMainWindow):
 
                         with open( os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"lambda_Ci_average.txt"), "a") as f:
                             f.write(
-                                f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci: {format(Ci_average_factor, ".2e")}, \n'
+                                f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci [mg/g]: {format(Ci_average_factor, ".2e")}, \n'
                             )                        
                         
                         utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
@@ -534,36 +533,108 @@ class MainWindow(QMainWindow):
     
                     else:
                         continue
-        
+        self.chosen_folder = self.Prefere_folder.currentText()
         self.confirm_names_button.disconnect()
         self.confirm_names_button.setEnabled(False)
         self.previous_element_button.disconnect()
+        self.previous_element_button.clicked.connect(self.previous_element_final)
         self.next_element_button.disconnect()
+        self.next_element_button.clicked.connect(self.next_element_final)
         self.quantify_button.disconnect()
         self.quantify_button.setText("Go back")
         self.quantify_button.clicked.connect(self.Back_to_quantify)
-         
-                                            
+        self.Prefere_folder.activated.disconnect()
+        self.Prefere_folder.activated.connect(self.new_prefered_folder)
+        
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
+        
+        self.saving_button.setEnabled(True)       
+                                 
 
     def Back_to_quantify(self):
+        
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        self.sample_pixmap2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output","mask_noc.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap2)
+        
         self.quantify_button.setText("Quantify")
         self.quantify_button.disconnect()
         self.quantify_button.clicked.connect(self.Quantify)
+        self.Prefere_folder.disconnect()
+        self.Prefere_folder.activated.connect(self.prefered_folder_selected)
+        self.confirm_names_button.clicked.connect(self.Confirmed_names)
+        self.previous_element_button.disconnect()
+        self.previous_element_button.clicked.connect(self.Previous_element)
+        self.next_element_button.disconnect()
+        self.next_element_button.clicked.connect(self.Next_element)
         
-    # def next_element_final(self):
-    # def previous_element_final(self):
-    # confirm_new_folder(self):
         
+    def next_element_final(self):
+        if self.current_index < len(self.elements_nodec) - 1:
+            self.current_index += 1
+            self.element_name_label.setText(self.elements_nodec[self.current_index])   
+        
+            self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
+            self.sample_picture_label.setPixmap(self.sample_pixmap)
+            self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
+            self.sample_picture_label2.setPixmap(self.sample_pixmap_2)  
+        
+    
+    def previous_element_final(self):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.element_name_label.setText(self.elements_nodec[self.current_index])
+        
+            self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
+            self.sample_picture_label.setPixmap(self.sample_pixmap)
+            self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
+            self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
+            
+        
+    def new_prefered_folder(self):
+        self.chosen_folder = self.Prefere_folder.currentText()
+        
+        #listing the elements inside
+        self.elements_nodec = []
+        path = Path(os.path.join(self.Main_Folder_Path, self.chosen_folder))
+        path_insides = os.listdir(path)
+        for file in path_insides:
+            reversed_file = file [::-1]
+            splitted_file = reversed_file.split("_")[0]
+            last_element_of_file = splitted_file[::-1]
+            if last_element_of_file.split(".")[0] != self.scater and last_element_of_file.split(".")[0] != self.zeropeak:
+                reversed_element = splitted_file.split(".")[1]
+                element = reversed_element[::-1] 
+                self.elements_nodec.append(element)
+               
+        
+        self.element_name_label.setText(self.elements_nodec[0])    
+        
+        #Prename
+        file_names = os.listdir(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder)))
+        first_file = file_names[0]
+        self.prename = first_file.split("_")[0]
+        
+        self.sample_pixmap = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.png"))
+        self.sample_picture_label.setPixmap(self.sample_pixmap)
+        self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.png"))
+        self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
         
     def Confirmed_saving(self):
-        self.saving_button.setEnabled(True)
+        self.quantify_button.setEnabled(True)
         self.saving_Ci = str(self.Ci_combobox.currentText())
         self.saving_sm =  str(self.SM_combobox.currentText())
         self.saving_lambda = str(self.Lambda_combobox.currentText())
-        self.saving_livetime = str(self.Livetime_combobox.currentText())      
+        self.saving_livetime = str(self.Livetime_combobox.currentText())
+        self.use_for_mask_button.setEnabled(True)        
+        self.next_element_button.setEnabled(True)
+        self.previous_element_button.setEnabled(True)      
   
-    def Saving(self):
-        print("Saved")
+    def Exit(self):
         print("Dziękuję za korzystanie z SliceQuant")
         exit()  
 
@@ -578,4 +649,5 @@ app.exec()
 
 # scalebar -> jeśli sie uda
 # min maxy
+# Lambda!!!
 

@@ -51,6 +51,7 @@ def absorption_coefficient(sample_dict,Ee):
 
 #poprawka na probke posrednia
 def lambda_factor(rho_D,Z,Eeffi,sample_dict):
+    
     phi_in = math.radians(50)
     phi_out = math.radians(50)
     
