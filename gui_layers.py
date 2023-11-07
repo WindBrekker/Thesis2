@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QComboBox,
+    QCheckBox,
 )
 
 class Color(QWidget):
@@ -172,6 +173,11 @@ class MainWindow(QMainWindow):
         self.Prefere_folder.setEnabled(False)
         self.Prefere_folder.setPlaceholderText("Confirm identifiers first")
 
+        # #QCheckBox
+        
+        
+        
+        
         # #QPixmap
         self.sample_pixmap = QPixmap('photo.png')
         self.sample_pixmap_2 = QPixmap('photo.png')
@@ -404,6 +410,7 @@ class MainWindow(QMainWindow):
         
         if not Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).exists():
             Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output")).mkdir()
+
         utils.output_to_file(self.livetime, Path(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_livetime_map"))) 
         self.mask_map = utils.mask_creating(self.elements_nodec[0],self.Main_Folder_Path,self.chosen_folder,self.prename,self.treshold,self.color_of_heatmap)
         
@@ -482,14 +489,29 @@ class MainWindow(QMainWindow):
                         sm_masked = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
                         for i in range(len(scater_tab)):
                             for j in range(len(scater_tab[0])):
-                                sm_masked[i][j] = sm[i][j] * self.mask_map[i][j]
+                                sm_masked[i][j] = sm[i][j] *1000* self.mask_map[i][j]
 
                         Ci_table = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
                         lambda_factor = [[0 for j in range(len(sm[0]))] for i in range(len(sm))]
-                        Ci_sum_factor = 0
-                        lambda_sum_factor = 0
-                        loop_counts = 0
-                        utils.output_to_file(sm,os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_sm"))
+                        if self.saving_sm == ".dat":
+                            utils.output_to_file(sm,os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_sm"))
+                        elif self.saving_sm == "Don't save":
+                            continue
+                        else:
+                            print(self.saving_sm)
+                            plt.imshow(sm, cmap=self.color_of_heatmap, interpolation="nearest")
+                            plt.title("sm_plot")
+                            plt.xlabel('X (mm)')
+                            plt.ylabel('Y (mm)')
+                            sm = np.array(sm)
+                            width_um = sm.shape[1]
+                            height_um = sm.shape[0]
+                            plt.xlim(0, (width_um * float(self.Pixel_size)/1000))
+                            plt.ylim((height_um * float(self.Pixel_size)/1000),0)
+                            plt.colorbar()
+                            plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_sm{self.saving_sm}"))
+                            plt.close()
+                            
 
                         for i in range(len(sm)):
                             for j in range(len(sm[0])):
@@ -500,39 +522,44 @@ class MainWindow(QMainWindow):
                                         float(self.energy_elements_dict[element]),
                                         self.sample_dict
                                     )
-                                    lambda_sum_factor += lambda_factor[i][j]
-                                    loop_counts += 1
-
                                     Ci_table[i][j] = (
                                         1000*table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
                                     )
-                                    Ci_sum_factor += Ci_table[i][j]
                                 else:
                                     continue
-                        lambda_average_factor = lambda_sum_factor / loop_counts
-                        Ci_average_factor = Ci_sum_factor / loop_counts
+                        lambda_average_factor = np.average(lambda_factor)
+                        Ci_average_factor = np.average(Ci_table)
+                        
+                        if self.saving_lambda == ".dat":
+                            utils.output_to_file(lambda_factor,os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_lambda"))
 
                         with open( os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"lambda_Ci_average.txt"), "a") as f:
                             f.write(
                                 f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci [mg/g]: {format(Ci_average_factor, ".2e")}, \n'
                             )                        
+                            
                         
-                        utils.output_to_file(Ci_table, os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_smi"))
-                        Ci_table = np.array(Ci_table)
-                        width_um = Ci_table.shape[1]
-                        height_um = Ci_table.shape[0]
-                        plt.xlim(0, (width_um * float(self.Pixel_size)/1000))
-                        plt.ylim((height_um * float(self.Pixel_size)/1000),0)
-                        plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
-                        plt.title(f"{element}_Ci_plot")
-                        plt.xlabel('X (mm)')
-                        plt.ylabel('Y (mm)')
-                        plt.colorbar()
-                        plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci."))
-                        plt.close()
+                        utils.output_to_file(Ci_table,os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci"))
+                        
+                        if self.saving_Ci == "Don't save":
+                            continue
+                        elif self.saving_Ci != ".dat":
+                            print(self.saving_Ci)
+                            Ci_table = np.array(Ci_table)
+                            width_um = Ci_table.shape[1]
+                            height_um = Ci_table.shape[0]
+                            plt.xlim(0, (width_um * float(self.Pixel_size)/1000))
+                            plt.ylim((height_um * float(self.Pixel_size)/1000),0)
+                            plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
+                            plt.title(f"{element}_Ci_plot")
+                            plt.xlabel('X (mm)')
+                            plt.ylabel('Y (mm)')
+                            plt.colorbar()
+                            plt.savefig(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{element}_Ci{self.saving_Ci}"))
+                            plt.close()
     
                     else:
-                        continue
+                        continue            
         self.chosen_folder = self.Prefere_folder.currentText()
         self.confirm_names_button.disconnect()
         self.confirm_names_button.setEnabled(False)
@@ -550,6 +577,15 @@ class MainWindow(QMainWindow):
         self.sample_picture_label.setPixmap(self.sample_pixmap)
         self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.png"))
         self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
+        
+        element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.txt")))
+        print(element_table_not_masked)
+        self.element_table = element_table_not_masked[element_table_not_masked != 0]
+        print(self.element_table)
+        self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
+        self.Median_value_label.setText(str(np.median(self.element_table)))
+        self.Min_value_label.setText(str(np.min(self.element_table)))
+        self.Max_value_label.setText(str(np.max(self.element_table)))
         
         self.saving_button.setEnabled(True)       
                                  
@@ -582,6 +618,15 @@ class MainWindow(QMainWindow):
             self.sample_picture_label.setPixmap(self.sample_pixmap)
             self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
             self.sample_picture_label2.setPixmap(self.sample_pixmap_2)  
+            
+            element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.txt")))
+            print(element_table_not_masked)
+            self.element_table = element_table_not_masked[element_table_not_masked != 0]
+            print(self.element_table)
+            self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
+            self.Median_value_label.setText(str(np.median(self.element_table)))
+            self.Min_value_label.setText(str(np.min(self.element_table)))
+            self.Max_value_label.setText(str(np.max(self.element_table)))
         
     
     def previous_element_final(self):
@@ -593,6 +638,15 @@ class MainWindow(QMainWindow):
             self.sample_picture_label.setPixmap(self.sample_pixmap)
             self.sample_pixmap_2 = QPixmap(os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.png"))
             self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
+            
+            element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.txt")))
+            print(element_table_not_masked)
+            self.element_table = element_table_not_masked[element_table_not_masked != 0]
+            print(self.element_table)
+            self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
+            self.Median_value_label.setText(str(np.median(self.element_table)))
+            self.Min_value_label.setText(str(np.min(self.element_table)))
+            self.Max_value_label.setText(str(np.max(self.element_table)))
             
         
     def new_prefered_folder(self):
@@ -648,6 +702,6 @@ app.exec()
 
 
 # scalebar -> jeśli sie uda
-# min maxy
+# Skala na heatmapie
+# kursor
 # Lambda!!!
-
