@@ -29,7 +29,7 @@ def SampSM_calc(input,a,b):
 
     output = []
     for i in range (len(input)):
-        output.append([(((float(a) * float(input[i][j])) - float(b))/1000000) for j in range(len(input[i]))])
+        output.append([(((float(a) * float(input[i][j])) - float(b)/1000)) for j in range(len(input[i]))])
     return output
 
 def output_to_file(input, output):
@@ -46,7 +46,7 @@ def absorption_coefficient(sample_dict,Ee):
         for key in sample_dict:
             ui_E = xr.CS_Total_CP(key,Ee)
             u_E += ui_E*float(sample_dict[key])
-        return u_E
+        return (u_E*1000000) #jednostka cm^2/ug
 #Machnac petle dla n pierwiastkow (zczytanych z pliku) z ta funkcja 
 
 #poprawka na probke posrednia

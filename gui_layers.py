@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
 
 
         self.setWindowTitle("QuantumSlice")
-        self.setGeometry(0,0,1200,700)
+        self.showMaximized()
 
     #main layout
         pagelayout = QVBoxLayout()
@@ -402,7 +402,7 @@ class MainWindow(QMainWindow):
                 columns = line.strip().split()
                 element = columns[0]
                 concentration = columns[1]
-                self.sample_dict[element] = concentration
+                self.sample_dict[element] = concentration  
         
         #calculating livetime with zeropeak
         table_of_zeropeaks = utils.file_to_list(Path(os.path.join(self.Main_Folder_Path,self.chosen_folder,f"{self.prename}__{self.zeropeak}.txt")))
@@ -498,7 +498,7 @@ class MainWindow(QMainWindow):
                         elif self.saving_sm == "Don't save":
                             continue
                         else:
-                            print(self.saving_sm)
+
                             plt.imshow(sm, cmap=self.color_of_heatmap, interpolation="nearest")
                             plt.title("sm_plot")
                             plt.xlabel('X (mm)')
@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
                                         self.sample_dict
                                     )
                                     Ci_table[i][j] = (
-                                        1000*table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
+                                        1000000*table_of_smi[i][j] / sm[i][j] / lambda_factor[i][j]
                                     )
                                 else:
                                     continue
@@ -535,7 +535,7 @@ class MainWindow(QMainWindow):
 
                         with open( os.path.join(self.Main_Folder_Path,f"{self.chosen_folder}_output", f"lambda_Ci_average.txt"), "a") as f:
                             f.write(
-                                f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci [mg/g]: {format(Ci_average_factor, ".2e")}, \n'
+                                f'element:  {element},  average lambda: {format(lambda_average_factor, ".2e")},    average Ci [ug/g]: {format(Ci_average_factor, ".2e")}, \n'
                             )                        
                             
                         
@@ -544,14 +544,13 @@ class MainWindow(QMainWindow):
                         if self.saving_Ci == "Don't save":
                             continue
                         elif self.saving_Ci != ".dat":
-                            print(self.saving_Ci)
                             Ci_table = np.array(Ci_table)
                             width_um = Ci_table.shape[1]
                             height_um = Ci_table.shape[0]
                             plt.xlim(0, (width_um * float(self.Pixel_size)/1000))
                             plt.ylim((height_um * float(self.Pixel_size)/1000),0)
                             plt.imshow(Ci_table, cmap=self.color_of_heatmap, interpolation="nearest")
-                            plt.title(f"{element}_Ci_plot")
+                            plt.title(f"{element}_Ci [ug/g]")
                             plt.xlabel('X (mm)')
                             plt.ylabel('Y (mm)')
                             plt.colorbar()
@@ -579,10 +578,9 @@ class MainWindow(QMainWindow):
         self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
         
         element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[0]}_Ci.txt")))
-        print(element_table_not_masked)
+
         self.element_table = element_table_not_masked[element_table_not_masked != 0]
-        print(self.element_table)
-        self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
+        self.Mean_value_label.setText(str(np.average(self.element_table)))
         self.Median_value_label.setText(str(np.median(self.element_table)))
         self.Min_value_label.setText(str(np.min(self.element_table)))
         self.Max_value_label.setText(str(np.max(self.element_table)))
@@ -620,9 +618,9 @@ class MainWindow(QMainWindow):
             self.sample_picture_label2.setPixmap(self.sample_pixmap_2)  
             
             element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.txt")))
-            print(element_table_not_masked)
+
             self.element_table = element_table_not_masked[element_table_not_masked != 0]
-            print(self.element_table)
+
             self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
             self.Median_value_label.setText(str(np.median(self.element_table)))
             self.Min_value_label.setText(str(np.min(self.element_table)))
@@ -640,9 +638,9 @@ class MainWindow(QMainWindow):
             self.sample_picture_label2.setPixmap(self.sample_pixmap_2)
             
             element_table_not_masked = np.array(utils.file_to_list(os.path.join(self.Main_Folder_Path, f"{self.chosen_folder}_output",f"{self.prename}_{self.elements_nodec[self.current_index]}_Ci.txt")))
-            print(element_table_not_masked)
+
             self.element_table = element_table_not_masked[element_table_not_masked != 0]
-            print(self.element_table)
+
             self.Mean_value_label.setText(str(format('{:.2e}'.format(np.average(self.element_table)))))
             self.Median_value_label.setText(str(np.median(self.element_table)))
             self.Min_value_label.setText(str(np.min(self.element_table)))
@@ -694,14 +692,11 @@ class MainWindow(QMainWindow):
 
 
 app = QApplication(sys.argv)
-
 window = MainWindow()
 window.show()
-
 app.exec()
 
 
 # scalebar -> jeśli sie uda
-# Skala na heatmapie
 # kursor
-# Lambda!!!
+#JEDNOSTKI g/cm/s!!
